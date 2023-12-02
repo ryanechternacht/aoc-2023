@@ -42,26 +42,26 @@
 
 ;; Man this is a lazy hack
 (defn get-digits-backwards [str]
-  (let [digits? (re-seq #"\d|one|two|three|four|five|six|seven|eight|nine" str)]
-    (map #(get {"one" "1"
-                "two" "2"
-                "three" "3"
-                "four" "4"
-                "five" "5"
-                "six" "6"
-                "seven" "7"
-                "eight" "8"
-                "nine" "9"} % %) digits?)))
+  (let [digits? (re-seq #"\d|eno|owt|eerht|ruof|evif|xis|neves|thgie|enin" (str/reverse str))]
+    (map #(get {"eno" "1"
+                "owt" "2"
+                "eerht" "3"
+                "ruof" "4"
+                "evif" "5"
+                "xis" "6"
+                "neves" "7"
+                "thgie" "8"
+                "enin" "9"} % %) digits?)))
 
 (comment
   (get-digits "fourabc123")
   (get-digits "twone")
-  (get-digits "4one1eightzgcpkgbpgmsevenninetwonetk")
+  (get-digits-backwards "4one1eightzgcpkgbpgmsevenninetwonetk")
   ;
   )
 
-(->> sample-file-2
+(->> input-file
      read-lines
-     (map (juxt (comp first get-digits) (comp last get-digits)))
+     (map (juxt (comp first get-digits) (comp first get-digits-backwards)))
      (map (comp parse-long #(apply str %)))
      (reduce +))
