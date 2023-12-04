@@ -1,6 +1,5 @@
 (ns day02
-  (:require [clojure.string :as str]
-            [clojure.string :as string]))
+  (:require [clojure.string :as str]))
 
 (def sample-file "resources/day02-sample.txt")
 (def input-file "resources/day02.txt")
