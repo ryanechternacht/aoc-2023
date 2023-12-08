@@ -30,7 +30,7 @@
      :bet (parse-long bet)}))
 
 (defn add-hand-strength [hand]
-  (let [[c1 c2 c3 c4 c5] (->> hand
+  (let [[c1 c2] (->> hand
                               frequencies
                               (map second)
                               sort
