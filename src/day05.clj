@@ -107,7 +107,6 @@
     nil))
 
 (defn map-value-backwards [value maps]
-  (println value maps)
   (or (reduce (fn [_ m]
                 (if-let [mapped-value (check-value-in-map-backwards m value)]
                   (reduced mapped-value)
@@ -118,6 +117,17 @@
 
 (defn map-value-through-backwards [maps value]
   (reduce map-value-backwards value (reverse maps)))
+
+(defn build-seed-ranges [seeds]
+  (->> seeds
+       (partition 2)
+       (map (fn [[x y]] {:lower x
+                         :upper (+ x y -1)}))
+       (sort-by :lower)))
+
+(defn is-seed? [seed-ranges seed?]
+  (when (some #(<= (:lower %) seed? (:upper %)) seed-ranges)
+    seed?))
 
 (comment
   (check-value-in-map-backwards
@@ -141,118 +151,25 @@
                                  ({:src-start 69, :dest-start 0, :range 1} {:src-start 0, :dest-start 1, :range 69})
                                  ({:src-start 56, :dest-start 60, :range 37} {:src-start 93, :dest-start 56, :range 4}))
                                35)
+
+  (build-seed-ranges '(79 14 55 13))
+
+  (is-seed? '({:lower 55, :upper 67} {:lower 79, :upper 92}) 68)
   ;
   )
 
-(let [{:keys [seeds maps]} (->> sample-file
+(let [{:keys [seeds maps]} (->> input-file
                                 read-lines
                                 break-lines-into-chunks
-                                build-maps-from-chunks)]
+                                build-maps-from-chunks)
+      seeds (build-seed-ranges seeds)]
   (reduce (fn [_ t]
-            )
+            (when (zero? (mod t 100000))
+              (println t))
+            (if-let [seed? (is-seed? seeds (map-value-through-backwards maps t))]
+              (reduced seed?)
+              nil))
           nil
           (range)))
 
-;; user=> (defn positive-numbers
-;;          ([] (positive-numbers 1))
-;;          ([n] (lazy-seq (cons n (positive-numbers (inc n))))))
-
-(defn build-seed-ranges [line]
-  (->> line
-       (re-seq #"\d+")
-       (map parse-long)
-       (partition 2)
-       (map (fn [[x y]] {:lower x
-                         :upper (+ x y -1)}))
-       (sort-by :lower)))
-
-(defn find-next-seed
-  "finds the next seed value after this value"
-  [ranges n]
-  (let [{:keys [lower] :as range} (->> ranges
-                                       (filter #(<= n (:upper %)))
-                                       first)]
-    (cond
-      (nil? range) nil
-      (< n lower) lower
-      :else n)))
-
-(defn get-all-seeds
-  ([ranges] (get-all-seeds ranges 0))
-  ([ranges n] (let [n+1 (find-next-seed ranges n)]
-                (lazy-seq (cons n+1 (get-all-seeds ranges (inc n+1)))))))
-
-(comment
-  (build-seed-ranges "seeds: 929142010 467769747 2497466808 210166838 3768123711 33216796 1609270159 86969850 199555506 378609832 1840685500 314009711 1740069852 36868255 2161129344 170490105 2869967743 265455365 3984276455 31190888")
-
-  (build-seed-ranges "seeds: 79 14 55 13")
-  (find-next-seed '({:lower 199555506, :upper 578165337}
-                    {:lower 929142010, :upper 1396911756}
-                    {:lower 1609270159, :upper 1696240008}
-                    {:lower 1740069852, :upper 1776938106}
-                    {:lower 1840685500, :upper 2154695210}
-                    {:lower 2161129344, :upper 2331619448}
-                    {:lower 2497466808, :upper 2707633645}
-                    {:lower 2869967743, :upper 3135423107}
-                    {:lower 3768123711, :upper 3801340506}
-                    {:lower 3984276455, :upper 4015467342})
-                  0)
-
-  (find-next-seed '({:lower 55, :upper 67} {:lower 79, :upper 92}) 0)
-
-  (let [all-seeds (get-all-seeds '({:lower 199555506, :upper 578165337}
-                                   {:lower 929142010, :upper 1396911756}
-                                   {:lower 1609270159, :upper 1696240008}
-                                   {:lower 1740069852, :upper 1776938106}
-                                   {:lower 1840685500, :upper 2154695210}
-                                   {:lower 2161129344, :upper 2331619448}
-                                   {:lower 2497466808, :upper 2707633645}
-                                   {:lower 2869967743, :upper 3135423107}
-                                   {:lower 3768123711, :upper 3801340506}
-                                   {:lower 3984276455, :upper 4015467342}))]
-    (->> all-seeds
-         (drop 100)
-         (take 200)))
-
-  (let [all-seeds (get-all-seeds '({:lower 55, :upper 67} {:lower 79, :upper 92}))]
-    (->> all-seeds
-         (take 100)))
-  ;
-  )
-
-;; (let [lines (->> sample-file read-lines)
-;;       {:keys [seeds maps]} (->> lines
-;;                                 break-lines-into-chunks
-;;                                 build-maps-from-chunks)
-;;       new-seeds (build-seed-ranges (first lines))]
-;;   (reduce (fn [acc v]
-;;             (min acc
-;;                  (map-value-through maps v)))
-;;           Integer/MAX_VALUE
-;;           new-seeds))
-
-;; lazy p2
-;; (let [lines (->> input-file read-lines)
-;;       {:keys [seeds maps]} (->> lines
-;;                                 break-lines-into-chunks
-;;                                 build-maps-from-chunks)]
-;;   (reduce (fn [acc v]
-;;             (when (= 0 (mod v 100000000))
-;;               (println v))
-;;             (min acc
-;;                  (map-value-through maps v)))
-;;           Integer/MAX_VALUE
-;;           (range 2497466808 (+ 2497466808 210166838))))
-
-
-;; 100000000  100000000
-;; 929142010  467769747 ;; 265455365
-;; 2497466808 210166838
-;; 3768123711 33216796 ;; 1787915678
-;; 1609270159 86969850
-;; 199555506  378609832
-;; 1840685500 314009711
-;; 1740069852 36868255
-;; 2161129344 170490105
-;; 2869967743 265455365
-;; 3984276455 31190888
+;; 391178260
