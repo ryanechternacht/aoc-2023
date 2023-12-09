@@ -9,10 +9,12 @@
        slurp
        str/split-lines
        (map #(re-seq #"\d+" %))
-       (apply zipmap)
+       (apply map vector)
        (map (fn [[k v]]
               {:race-length (parse-long k)
                :best-score (parse-long v)}))))
+
+(apply zipmap '(("52" "94" "75" "94") ("426" "1374" "1279" "1216")))
 
 (defn build-potential-scores [race-length]
   (->> race-length
@@ -36,3 +38,6 @@
      read-data
      (map determine-winning-options)
      (reduce *))
+
+(determine-winning-options {:race-length 52947594
+                            :best-score 426137412791216})
