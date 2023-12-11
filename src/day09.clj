@@ -89,7 +89,7 @@
   )
 
 ;; p2
-(->> sample-file
+(->> input-file
      read-lines
      (map parse-line)
      (map get-prior-value)
