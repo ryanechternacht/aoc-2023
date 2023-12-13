@@ -39,30 +39,35 @@
                             distinct)]
     (find-missing cols-with-data)))
 
-(defn expand-row [m r]
-  (reduce (fn [acc [x y]]
-            (if (< r y)
-              (conj acc [x (inc y)])
-              (conj acc [x y])))
-          #{}
-          m))
+(defn expand-row
+  ([m r] (expand-row m r 2))
+  ([m r size-multiplier]
+   (reduce (fn [acc [x y]]
+             (if (< r y)
+               (conj acc [x (+ (dec size-multiplier) y)])
+               (conj acc [x y])))
+           #{}
+           m)))
 
-(defn expand-col [m c]
-  (reduce (fn [acc [x y]]
-            (if (< c x)
-              (conj acc [(inc x) y])
-              (conj acc [x y])))
-          #{}
-          m))
+(defn expand-col 
+  ([m c] (expand-col m c 2))
+  ([m c size-multiplier] (reduce (fn [acc [x y]]
+                         (if (< c x)
+                           (conj acc [(+ (dec size-multiplier) x) y])
+                           (conj acc [x y])))
+                       #{}
+                       m)))
 
-(defn expand-map [m empty-rows empty-cols]
-  (let [rows-expanded (reduce expand-row
-                              m
-                              (->> empty-rows sort reverse))
-        cols-expanded (reduce expand-col
-                              rows-expanded
-                              (->> empty-cols sort reverse))]
-    cols-expanded))
+(defn expand-map 
+  ([m empty-rows empty-cols] (expand-map m empty-rows empty-cols 1))
+  ([m empty-rows empty-cols size-multiplier]
+   (let [rows-expanded (reduce (fn [acc r] (expand-row acc r size-multiplier))
+                               m
+                               (->> empty-rows sort reverse))
+         cols-expanded (reduce (fn [acc c] (expand-col acc c size-multiplier))
+                               rows-expanded
+                               (->> empty-cols sort reverse))]
+     cols-expanded)))
 
 (defn manhattan-dist [[x1 y1] [x2 y2]]
   (+ (Math/abs (- x1 x2))
@@ -82,13 +87,24 @@
   (expand-row #{[7 1] [7 8] [3 0] [9 6] [4 9] [0 9] [1 5] [6 4] [0 2]}
               3)
 
+  (expand-row #{[7 1] [7 8] [3 0] [9 6] [4 9] [0 9] [1 5] [6 4] [0 2]}
+              3
+              10)
+
   (expand-col #{[7 1] [7 8] [3 0] [9 6] [4 9] [0 9] [1 5] [6 4] [0 2]}
               2)
+  (expand-col #{[7 1] [7 8] [3 0] [9 6] [4 9] [0 9] [1 5] [6 4] [0 2]}
+              10)
 
   (expand-map #{[7 1] [7 8] [3 0] [9 6] [4 9] [0 9] [1 5] [6 4] [0 2]}
               #{7 3}
               #{2 5 8})
-  
+
+  (expand-map #{[7 1] [7 8] [3 0] [9 6] [4 9] [0 9] [1 5] [6 4] [0 2]}
+              #{7 3}
+              #{2 5 8}
+              2)
+
   (manhattan-dist [0 0] [2 3])
   (manhattan-dist [-2 -3] [2 3])
   (manhattan-dist [1 1] [3 2])
@@ -98,6 +114,7 @@
   ;
   )
 
+;; p1
 (let [m (->> input-file
              read-lines
              build-map)
@@ -110,3 +127,15 @@
        (reduce +)
        (#(/ % 2))))
 
+;; p2
+(let [m (->> input-file
+             read-lines
+             build-map)
+      empty-rows (find-empty-rows m)
+      empty-cols (find-empty-cols m)
+      expanded-m (expand-map m empty-rows empty-cols 1000000)]
+  (->> expanded-m
+       create-pairs
+       (map #(apply manhattan-dist %))
+       (reduce +)
+       (#(/ % 2))))
