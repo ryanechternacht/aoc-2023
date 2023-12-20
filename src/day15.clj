@@ -107,9 +107,9 @@
   ;
   )
 
-(->> sample-file
+(->> input-file
      read-file
      (map parse-command)
      run-commands
-     (filter (fn [[_ l]] (seq l))))
+     (filter (fn [[_ l]] (seq l)))
      sum-focus-power)
